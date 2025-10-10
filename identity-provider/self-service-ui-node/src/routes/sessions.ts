@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import {
   defaultConfig,
-  requireAAL2Auth,
+  requireAuth,
   RouteCreator,
   RouteRegistrator,
 } from "../pkg"
@@ -97,5 +97,5 @@ export const registerSessionsRoute: RouteRegistrator = (
   createHelpers = defaultConfig,
   route = "/sessions",
 ) => {
-  app.get(route, requireAAL2Auth(createHelpers), createSessionsRoute(createHelpers))
+  app.get(route, requireAuth(createHelpers), createSessionsRoute(createHelpers))
 }

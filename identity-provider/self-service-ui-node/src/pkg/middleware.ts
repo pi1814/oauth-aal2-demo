@@ -44,11 +44,11 @@ const maybeInitiate2FA =
  */
 const addSessionToRequest =
   (req: Request) =>
-  ({ data: session }: { data: Session }) => {
-    // `whoami` returns the session or an error. We're changing the type here
-    // because express-session is not detected by TypeScript automatically.
-    req.session = session
-  }
+    ({ data: session }: { data: Session }) => {
+      // `whoami` returns the session or an error. We're changing the type here
+      // because express-session is not detected by TypeScript automatically.
+      req.session = session
+    }
 
 /**
  * This middleware requires that the HTTP request has a session.
@@ -60,95 +60,40 @@ const addSessionToRequest =
  */
 export const requireAuth =
   (createHelpers: RouteOptionsCreator) =>
-  (req: Request, res: Response, next: NextFunction) => {
-    const { frontend, apiBaseUrl } = createHelpers(req, res)
+    (req: Request, res: Response, next: NextFunction) => {
+      const { frontend, apiBaseUrl } = createHelpers(req, res)
 
-    // when accessing settings with a valid flow id
-    // we allow the settings page to trigger the
-    // login flow on session_aal2_required
-    if (req.url.includes("/settings") && req.query.flow) {
-      if (isUUID.test(req.query.flow.toString())) {
-        next()
-        return
-      }
-    }
-    frontend
-      .toSession({ cookie: req.header("cookie") })
-      .then(addSessionToRequest(req))
-      .then(() => next())
-      .catch((err: AxiosError) => {
-        if (!maybeInitiate2FA(req, res, apiBaseUrl)(err)) {
-          res.redirect(getUrlForFlow(apiBaseUrl, "login"))
-          return
-        }
-      })
-  }
-
-/**
- * This middleware requires that the HTTP request has a session with AAL2.
- * If the session is not present or is only AAL1, it will redirect to AAL2 login flow.
- */
-export const requireAAL2Auth =
-  (createHelpers: RouteOptionsCreator) =>
-  (req: Request, res: Response, next: NextFunction) => {
-    console.log("requireAAL2Auth middleware invoked")
-    const { frontend, apiBaseUrl } = createHelpers(req, res)
-
-    // when accessing settings with a valid flow id
-    // we allow the settings page to trigger the
-    // login flow on session_aal2_required
-    if (req.url.includes("/settings") && req.query.flow) {
-      if (isUUID.test(req.query.flow.toString())) {
-        next()
-        return
-      }
-    }
-
-    frontend
-      .toSession({ cookie: req.header("cookie") })
-      .then((response: { data: Session }) => {
-        const session = response.data
-        
-        // Check if session has AAL2
-        if (session.authenticator_assurance_level === "aal2") {
-          req.session = session
+      // when accessing settings with a valid flow id
+      // we allow the settings page to trigger the
+      // login flow on session_aal2_required
+      if (req.url.includes("/settings") && req.query.flow) {
+        if (isUUID.test(req.query.flow.toString())) {
           next()
-        } else {
-          // Force AAL2 step-up authentication
-          console.log("Session is not AAL2, redirecting to AAL2 login flow")
-          const return_to = req.header("x-original-uri") ?? req.url.toString()
-          res.redirect(
-            getUrlForFlow(
-              apiBaseUrl,
-              "login",
-              new URLSearchParams({
-                aal: "aal2",
-                via: "email", // Specify delivery method
-                return_to,
-              }),
-            ),
-          )
-        }
-      })
-      .catch((err: AxiosError) => {
-        console.log("Error fetching session:", err.message)
-        if (!maybeInitiate2FA(req, res, apiBaseUrl)(err)) {
-          res.redirect(getUrlForFlow(apiBaseUrl, "login"))
           return
         }
-      })
-  }
+      }
+      frontend
+        .toSession({ cookie: req.header("cookie") })
+        .then(addSessionToRequest(req))
+        .then(() => next())
+        .catch((err: AxiosError) => {
+          if (!maybeInitiate2FA(req, res, apiBaseUrl)(err)) {
+            res.redirect(getUrlForFlow(apiBaseUrl, "login"))
+            return
+          }
+        })
+    }
 
 
 export const addFavicon =
   (createHelpers: RouteOptionsCreator) =>
-  (req: Request, res: Response, next: NextFunction) => {
-    const { faviconUrl, faviconType } = createHelpers(req, res)
-    res.locals.faviconUrl = faviconUrl
-    res.locals.faviconType = faviconType
+    (req: Request, res: Response, next: NextFunction) => {
+      const { faviconUrl, faviconType } = createHelpers(req, res)
+      res.locals.faviconUrl = faviconUrl
+      res.locals.faviconType = faviconType
 
-    next()
-  }
+      next()
+    }
 
 /**
  * Sets the session in the request. If no session is found,
@@ -160,14 +105,37 @@ export const addFavicon =
  */
 export const setSession =
   (createHelpers: RouteOptionsCreator) =>
-  (req: Request, res: Response, next: NextFunction) => {
-    const { frontend, apiBaseUrl } = createHelpers(req, res)
-    frontend
-      .toSession({ cookie: req.header("cookie") })
-      .then(addSessionToRequest(req))
-      .catch(maybeInitiate2FA(req, res, apiBaseUrl))
-      .then(() => next())
-  }
+    (req: Request, res: Response, next: NextFunction) => {
+      const { frontend, apiBaseUrl } = createHelpers(req, res)
+      frontend
+        .toSession({ cookie: req.header("cookie") })
+        .then((response: { data: Session }) => {
+          const session = response.data
+          if (session.authenticator_assurance_level === "aal2") {
+            addSessionToRequest(req)
+          } else {
+            // Force AAL2 step-up authentication
+            console.log("Session is not AAL2, redirecting to AAL2 login flow")
+            const return_to = req.header("x-original-uri") ?? req.url.toString()
+            res.redirect(
+              getUrlForFlow(
+                apiBaseUrl,
+                "login",
+                new URLSearchParams({
+                  aal: "aal2",
+                  via: "email", // Specify delivery method
+                  return_to,
+                }),
+              ),
+            )
+          }
+        })
+        .catch(maybeInitiate2FA(req, res, apiBaseUrl))
+        .then(() => {
+          // If session fetch was successful or not, we proceed to next middleware
+          next();
+        });
+    }
 
 /**
  * This middleware requires that the HTTP request has no session.
@@ -177,17 +145,17 @@ export const setSession =
  */
 export const requireNoAuth =
   (createHelpers: RouteOptionsCreator) =>
-  (req: Request, res: Response, next: NextFunction) => {
-    const { frontend } = createHelpers(req, res)
-    frontend
-      .toSession({ cookie: req.header("cookie") })
-      .then(() => {
-        res.redirect("welcome")
-      })
-      .catch(() => {
-        next()
-      })
-  }
+    (req: Request, res: Response, next: NextFunction) => {
+      const { frontend } = createHelpers(req, res)
+      frontend
+        .toSession({ cookie: req.header("cookie") })
+        .then(() => {
+          res.redirect("welcome")
+        })
+        .catch(() => {
+          next()
+        })
+    }
 
 /**
  * Detects the language of the user and sets it in the response locals.
