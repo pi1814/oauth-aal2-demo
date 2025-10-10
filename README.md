@@ -43,7 +43,15 @@ Kratos runs on:
 Custom UI runs on:
 - `http://0.0.0.0:4455`
 
-### 3. Client App
+### 3. Create OAuth2 Client
+
+```sh
+docker exec -it identity-provider-hydra-1 hydra create oauth2-client --endpoint http://0.0.0.0:4445 --redirect-uri http://0.0.0.0:4000/callback  --name "My Node.js App" --grant-type authorization_code,refresh_token --response-type code --scope openid,offline_access,email'
+```
+
+Copy the `CLIENT_ID` & `CLIENT_SECRET` into `client-app/.env`.
+
+### 4. Client App
 
 ```sh
 cd client-app
@@ -52,23 +60,6 @@ npm start
 ```
 
 Runs on: `http://0.0.0.0:4000`
-
-### 4. Create OAuth2 Client
-
-```sh
-curl --request POST \
-  --url http://0.0.0.0:4445/admin/clients \
-  --header 'Content-Type: application/json' \
-  --data '{
-    "grant_types": ["authorization_code", "refresh_token"],
-    "redirect_uris": ["http://0.0.0.0:4000/callback"],
-    "response_types": ["code"],
-    "scope": "openid offline",
-    "token_endpoint_auth_method": "none"
-  }'
-```
-
-Copy the `CLIENT_ID` into `client-app/.env`.
 
 ### 5. Test the Flow
 
