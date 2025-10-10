@@ -1,6 +1,8 @@
 # Ory Hydra OAuth2 Custom UI Example (Node.js)
 
-> ### Disclaimer: This demo project was solely possible due to multiple awesome projects. See [references](https://github.com/pi1814/OAuth2-AAL2-Demo?tab=readme-ov-file#references).
+>
+> [!Important]
+> ### Note: This demo builds upon several outstanding open-source projects. See [references](https://github.com/pi1814/OAuth2-AAL2-Demo?tab=readme-ov-file#references).
 
 This repository demonstrates OAuth2 authentication flow using [Ory Hydra](https://www.ory.sh/hydra) as the authorization server, with custom Node.js applications for both the OAuth2 client and the login/consent UI.
 
@@ -82,6 +84,7 @@ Runs on: `http://0.0.0.0:4000`
 - [Ory Kratos & Hydra Integration](https://github.com/shodgson/ory-kratos-hydra-integration-demo/tree/main)
 - [Ory Kratos Self-Service UI Node.js](https://github.com/ory/kratos-selfservice-ui-node)
 - [Ory Kratos Self-Service UI React](https://github.com/ory/kratos-selfservice-ui-react-nextjs)
+- [Next Ory](https://github.com/MarkusThielker/next-ory.git)_
 
 ---
 
