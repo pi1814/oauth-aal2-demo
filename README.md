@@ -1,4 +1,4 @@
-# Ory Hydra OAuth2 Custom UI Example (Node.js)
+# OAuth2 + AAL2 Custom UI Example
 
 >
 > [!Important]
@@ -84,7 +84,7 @@ Runs on: `http://0.0.0.0:4000`
 - [Ory Kratos & Hydra Integration](https://github.com/shodgson/ory-kratos-hydra-integration-demo/tree/main)
 - [Ory Kratos Self-Service UI Node.js](https://github.com/ory/kratos-selfservice-ui-node)
 - [Ory Kratos Self-Service UI React](https://github.com/ory/kratos-selfservice-ui-react-nextjs)
-- [Next Ory](https://github.com/MarkusThielker/next-ory.git)_
+- [Next Ory](https://github.com/MarkusThielker/next-ory.git)
 
 ---
 
