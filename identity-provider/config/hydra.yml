@@ -1,0 +1,30 @@
+serve:
+  cookies:
+    same_site_mode: Lax
+
+urls:
+  self:
+    issuer: http://0.0.0.0:4444
+  consent: http://0.0.0.0:4455/consent
+  login: http://0.0.0.0:4455/login
+  logout: http://0.0.0.0:4455/logout
+  identity_provider:
+    publicUrl: http://0.0.0.0:4433
+    url: http://0.0.0.0:4434
+
+
+secrets:
+  system:
+    - youReallyNeedToChangeThis
+
+oidc:
+  subject_identifiers:
+    supported_types:
+      - pairwise
+      - public
+    pairwise:
+      salt: youReallyNeedToChangeThis
+
+log:
+  leak_sensitive_values: true
+  level: debug

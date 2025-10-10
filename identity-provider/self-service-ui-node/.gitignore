@@ -1,0 +1,58 @@
+# Node.js dependencies
+/node_modules/
+dist/*
+build/*
+next/*
+nuxt/*
+
+# Logs
+**/npm-debug.log*
+**/yarn-debug.log*
+**/yarn-error.log*
+**/pnpm-debug.log*
+**/logs/
+**/*.log
+
+# Environment variables
+**/.env
+**/.env.local
+**/.env.development.local
+**/.env.test.local
+**/.env.production.local
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE files
+.vscode/
+.idea/
+*.swp
+
+# Docker
+**/tmp/
+**/.docker/
+
+# Coverage
+**/coverage/
+**/.nyc_output/
+
+# Misc
+**/.cache/
+**/.eslintcache
+**/.parcel-cache/
+**/.sass-cache/
+**/.turbo/
+**/.reference-ignore
+
+# Build artifacts
+**/*.tsbuildinfo
+
+# Self-service UI Node specific
+identity-provider/self-service-ui-node/.reference-ignore
+identity-provider/self-service-ui-node/.prettierignore
+identity-provider/self-service-ui-node/.prettierrc.js
+identity-provider/self-service-ui-node/nodemon.json
+
+# Ignore SDK generated files
+identity-provider/self-service-ui-node/contrib/sdk/
