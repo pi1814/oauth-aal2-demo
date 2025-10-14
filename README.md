@@ -12,6 +12,11 @@ This repository demonstrates OAuth2 authentication flow using [Ory Hydra](https:
 - **Login & Consent App**: Node.js app for user authentication and consent screens
 - **Client App**: Node.js app that authenticates users via OAuth2
 
+## Demo
+
+![oauth2aal2](https://github.com/user-attachments/assets/7523a85a-2563-4c33-a204-f711b93280ca)
+
+
 ## Folder Structure
 
 ```
