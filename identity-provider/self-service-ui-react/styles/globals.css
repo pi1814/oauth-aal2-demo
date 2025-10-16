@@ -1,1 +1,3 @@
 @import "./flexboxgrid.css";
+@import "react-toastify/dist/ReactToastify.css";
+@import "tailwindcss";
