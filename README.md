@@ -53,7 +53,7 @@ Custom UI runs on:
 ### 3. Create OAuth2 Client
 
 ```sh
-docker exec -it identity-provider-hydra-1 hydra create oauth2-client --endpoint http://0.0.0.0:4445 --redirect-uri http://0.0.0.0:4000/callback  --name "My Node.js App" --grant-type authorization_code,refresh_token --response-type code --scope openid,offline_access,email'
+docker exec -it identity-provider-hydra-1 hydra create oauth2-client --endpoint http://0.0.0.0:4445 --redirect-uri http://0.0.0.0:4000/callback  --name "My Node.js App" --grant-type authorization_code,refresh_token --response-type code --scope openid,offline_access,email
 ```
 
 Copy the `CLIENT_ID` & `CLIENT_SECRET` into `client-app/.env`.
