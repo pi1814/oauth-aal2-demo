@@ -11,6 +11,16 @@ serve:
     base_url: http://0.0.0.0:4433
     cors:
       enabled: true
+      allowed_origins:
+        - http://0.0.0.0:3000
+        - http://0.0.0.0:4455
+      allow_credentials: true
+      allowed_headers:
+        - Content-Type
+        - Cookie
+        - X-CSRF-Token
+      exposed_headers:
+        - Content-Type
   admin:
     base_url: http://0.0.0.0:4434
 
@@ -22,6 +32,7 @@ selfservice:
   default_browser_return_url: http://0.0.0.0:4455/
   allowed_return_urls:
     - http://0.0.0.0:4455
+    - http://0.0.0.0:3000
 
   methods:
     lookup_secret:
