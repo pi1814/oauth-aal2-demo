@@ -1,4 +1,11 @@
-import { DocsButton, MarginCard, LogoutLink } from "../pkg";
+import {
+  DocsButton,
+  MarginCard,
+  LogoutLink,
+  isQuerySet,
+  getUrlForFlow,
+  defaultConfig,
+} from "../pkg";
 import ory from "../pkg/sdk";
 import { Card, CardTitle, P, H2, H3, CodeBox } from "@ory/themes";
 import { AxiosError } from "axios";
@@ -13,7 +20,26 @@ const Home: NextPage = () => {
   );
   const [hasSession, setHasSession] = useState<boolean>(false);
   const router = useRouter();
-  const onLogout = LogoutLink();
+  // const onLogout = LogoutLink();
+  const {
+    flow,
+    aal = "aal2",
+    refresh = "",
+    return_to = "",
+    organization = "",
+    via = "",
+    login_challenge,
+    identity_schema,
+  } = router?.query;
+
+  const initFlowQuery = new URLSearchParams({
+    aal: aal.toString(),
+    refresh: refresh.toString(),
+    return_to: return_to.toString(),
+    organization: organization.toString(),
+    via: via.toString(),
+    flow: flow ? flow.toString() : "",
+  });
 
   useEffect(() => {
     ory.frontend
@@ -23,28 +49,48 @@ const Home: NextPage = () => {
           console.log("User has completed 2FA");
           setSession(JSON.stringify(resp.data, null, 2));
           setHasSession(true);
-        }
-        else {
+        } else {
           console.log("User has not completed 2FA");
-          router.push(`/login?aal=aal2&via=email&return_to=${window.location.href}`);
+
+          if (isQuerySet(login_challenge)) {
+            initFlowQuery.append("login_challenge", login_challenge);
+          }
+          if (isQuerySet(identity_schema)) {
+            initFlowQuery.append("identity_schema", identity_schema);
+          }
+
+          // const initFlowUrl = getUrlForFlow(
+          //   defaultConfig().kratosBrowserUrl,
+          //   "login",
+          //   initFlowQuery
+          // );
+
+          router.push(`/login?${initFlowQuery.toString()}`);
         }
       })
       .catch((err: AxiosError) => {
         switch (err.response?.status) {
           case 403:
-          // This is a legacy error code thrown. See code 422 for
-          // more details.
-          case 422:
-            // This status code is returned when we are trying to
-            // validate a session which has not yet completed
-            // its second factor
-            return router.push(`/login?aal=aal2&via=email&return_to=${window.location.href}`);
+          case 422: {
+            // Session exists but 2FA not completed, redirect to login with AAL2
+            const loginChallenge = router.query.login_challenge;
+            const params = new URLSearchParams({
+              aal: "aal2",
+              via: "email",
+              return_to: window.location.href,
+            });
+
+            if (loginChallenge && typeof loginChallenge === "string") {
+              params.append("login_challenge", loginChallenge);
+            }
+
+            return router.push(`/login?${params.toString()}`);
+          }
           case 401:
-            // do nothing, the user is not logged in
+            // User not logged in, no redirect needed
             return;
         }
-
-        // Something else happened!
+        // Unexpected error
         return Promise.reject(err);
       });
   }, [router]);
@@ -160,7 +206,7 @@ const Home: NextPage = () => {
           <DocsButton
             unresponsive
             testid="logout"
-            onClick={onLogout}
+            onClick={LogoutLink(Array.from(initFlowQuery))}
             disabled={!hasSession}
             title={"Logout"}
           />

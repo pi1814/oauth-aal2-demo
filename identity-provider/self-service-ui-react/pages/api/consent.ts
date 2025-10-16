@@ -1,8 +1,27 @@
-// app/api/consent/route.ts
 import { NextRequest, NextResponse } from 'next/server'
-import ory from "../../../pkg/sdk";
+import ory from "../../pkg/sdk";
 import { AcceptOAuth2ConsentRequestSession } from '@ory/hydra-client-fetch'
-import { oidcConformityMaybeFakeSession } from '../../../pkg/stub/oidc-cert'
+import { oidcConformityMaybeFakeSession } from '../../pkg/stub/oidc-cert'
+export const runtime = 'edge'
+
+
+export default async function handler(
+  req: NextRequest,
+  res: NextResponse
+) {
+  if (req.method === 'GET') {
+    return GET(req)
+  }
+
+  if (req.method === 'POST') {
+    return POST(req)
+  }
+
+  return NextResponse.json(
+      { error: `Method ${req.method} Not Allowed`},
+      { status: 405 }
+    )
+}
 
 // GET handler - Fetch consent request
 export async function GET(request: NextRequest) {

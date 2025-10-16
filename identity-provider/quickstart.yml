@@ -21,6 +21,7 @@ services:
     restart: on-failure
     networks:
       - intranet
+  
   # kratos-selfservice-ui-node:
   #   build: ./self-service-ui-node
   #   ports:
@@ -37,6 +38,8 @@ services:
   #   networks:
   #     - intranet
   #   restart: on-failure
+
+
   kratos-selfservice-ui-react:
     build: ./self-service-ui-react
     ports:
@@ -53,6 +56,8 @@ services:
     networks:
       - intranet
     restart: on-failure
+
+  
   kratos:
     depends_on:
       - kratos-migrate

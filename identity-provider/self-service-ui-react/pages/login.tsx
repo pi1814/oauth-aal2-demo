@@ -1,147 +1,171 @@
-import { LoginFlow, UpdateLoginFlowBody, OAuth2LoginRequest, SuccessfulNativeLogin } from "@ory/client"
-import { CardTitle } from "@ory/themes"
-import { AxiosError } from "axios"
-import type { NextPage } from "next"
-import Head from "next/head"
-import Link from "next/link"
-import { useRouter } from "next/router"
-import { useEffect, useState } from "react"
-
-import { ActionCard, CenterLink, LogoutLink, Flow, MarginCard } from "../pkg"
-import { handleGetFlowError, handleFlowError } from "../pkg/errors"
-import ory from "../pkg/sdk"
+import {
+  ActionCard,
+  CenterLink,
+  LogoutLink,
+  Flow,
+  MarginCard,
+  isQuerySet,
+  getUrlForFlow,
+  defaultConfig,
+} from "../pkg";
+import { handleGetFlowError, handleFlowError } from "../pkg/errors";
+import ory from "../pkg/sdk";
+import {
+  LoginFlow,
+  UpdateLoginFlowBody,
+  OAuth2LoginRequest,
+  SuccessfulNativeLogin,
+} from "@ory/client";
+import { CardTitle } from "@ory/themes";
+import { AxiosError } from "axios";
+import type { NextPage } from "next";
+import Head from "next/head";
+import Link from "next/link";
+import { useRouter } from "next/router";
+import { useEffect, useState } from "react";
 
 const Login: NextPage = () => {
-  console.log("Rendering login page")
-  const [flow, setFlow] = useState<LoginFlow>()
-  const [logoutUrl, setLogoutUrl] = useState<string>("")
+  console.log("Rendering login page");
+  const [flow, setFlow] = useState<LoginFlow>();
+  const [logoutUrl, setLogoutUrl] = useState<string>("");
 
   // Get ?flow=... from the URL
-  const router = useRouter()
+  const router = useRouter();
   const {
     return_to: returnTo,
     flow: flowId,
-    // Refresh means we want to refresh the session. This is needed, for example, when we want to update the password
-    // of a user.
-    refresh,
-    // AAL = Authorization Assurance Level. This implies that we want to upgrade the AAL, meaning that we want
-    // to perform two-factor authentication/verification.
-    aal,
-    via,
-    // OAuth2 login challenge from Hydra
-    login_challenge: loginChallenge,
-    // Organization for multi-tenancy
-    organization,
-    // Identity schema selection
+    refresh = "",
+    aal = "",
+    via = "",
+    login_challenge: login_challenge,
+    organization = "",
     identity_schema: identitySchema,
-  } = router.query
+    return_to = "",
+    identity_schema,
+  } = router.query;
 
-  // This might be confusing, but we want to show the user an option
-  // to sign out if they are performing two-factor authentication!
-  const onLogout = LogoutLink([aal, refresh])
+  const initFlowQuery = new URLSearchParams({
+    aal: aal.toString(),
+    refresh: refresh.toString(),
+    return_to: return_to.toString(),
+    organization: organization.toString(),
+    via: via.toString(),
+  });
 
-  // Fetch logout URL for 2FA/refresh flows
-  useEffect(() => {
-    const fetchLogoutUrl = async () => {
-      if (flow && (flow.requested_aal === "aal2" || flow.refresh)) {
-        try {
-          const { data } = await ory.frontend.createBrowserLogoutFlow({
-            returnTo: returnTo ? String(returnTo) : flow.return_to || "",
-          })
-          setLogoutUrl(data.logout_url)
-        } catch (err) {
-          console.error("Unable to create logout URL", err)
-        }
-      }
-    }
+  if (isQuerySet(login_challenge)) {
+    initFlowQuery.append("login_challenge", login_challenge);
+  }
+  if (isQuerySet(identity_schema)) {
+    initFlowQuery.append("identity_schema", identity_schema);
+  }
+  // const onLogout = LogoutLink(Array.from(initFlowQuery));
 
-    fetchLogoutUrl()
-  }, [flow, returnTo])
+  // // Fetch logout URL for 2FA/refresh flows
+  // useEffect(() => {
+  //   const fetchLogoutUrl = async () => {
+  //     if (flow && (flow.requested_aal === "aal2" || flow.refresh)) {
+  //       try {
+  //         const { data } = await ory.frontend.createBrowserLogoutFlow({
+  //           returnTo: returnTo ? String(returnTo) : flow.return_to || "",
+  //         });
+  //         setLogoutUrl(data.logout_url);
+  //       } catch (err) {
+  //         console.error("Unable to create logout URL", err);
+  //       }
+  //     }
+  //   };
+  //   fetchLogoutUrl();
+  // }, [flow, returnTo]);
 
   // Handle verification flow redirect for email verification required
   const redirectToVerificationFlow = async (loginFlow: LoginFlow) => {
     try {
-      const { data: verificationFlow } = await ory.frontend.createBrowserVerificationFlow({
-        returnTo: returnTo ? String(returnTo) : loginFlow.return_to || "",
-      })
+      const { data: verificationFlow } =
+        await ory.frontend.createBrowserVerificationFlow({
+          returnTo: returnTo ? String(returnTo) : loginFlow.return_to || "",
+        });
 
       const verificationParams = new URLSearchParams({
         flow: verificationFlow.id,
         message: JSON.stringify(loginFlow.ui.messages),
-      })
+      });
 
-      router.push(`/verification?${verificationParams.toString()}`)
+      router.push(`/verification?${verificationParams.toString()}`);
     } catch (err) {
-      console.error("Error creating verification flow:", err)
-      // Fallback redirect
+      console.error("Error creating verification flow:", err);
       const fallbackParams = new URLSearchParams({
         return_to: returnTo ? String(returnTo) : loginFlow.return_to || "",
-      })
+      });
       if (loginFlow.identity_schema) {
-        fallbackParams.append("identity_schema", loginFlow.identity_schema)
+        fallbackParams.append("identity_schema", loginFlow.identity_schema);
       }
-      router.push(`/verification?${fallbackParams.toString()}`)
+      router.push(`/verification?${fallbackParams.toString()}`);
     }
-  }
+  };
 
   useEffect(() => {
-    // If the router is not ready yet, or we already have a flow, do nothing.
-    if (!router.isReady || flow) {
-      return
-    }
+    if (!router.isReady || flow) return;
 
-    // If ?flow=.. was in the URL, we fetch it
     if (flowId) {
       ory.frontend
-        .getLoginFlow({ id: String(flowId) })
+        .getLoginFlow({
+          id: String(flowId),
+        })
         .then(async ({ data }) => {
-          console.log("Fetched existing flow")
-          console.log(data)
+          console.log("Fetched existing flow");
+          console.log(data);
 
           // Check if email verification is required (message ID 4000010)
           if (data.ui.messages && data.ui.messages.length > 0) {
             const needsVerification = data.ui.messages.some(
               (msg) => msg.id === 4000010
-            )
+            );
             if (needsVerification) {
-              await redirectToVerificationFlow(data)
-              return
+              await redirectToVerificationFlow(data);
+              return;
             }
           }
 
-          setFlow(data)
+          setFlow(data);
         })
-        .catch(handleGetFlowError(router, "login", setFlow))
-      return
+        .catch(handleGetFlowError(router, "login", setFlow));
+      return;
     }
 
-    // Otherwise we initialize it
+    // Initialize new login flow with full OAuth2 context
     const createFlowParams: {
-      refresh?: boolean
-      aal?: string
-      via?: string
-      returnTo?: string
-      loginChallenge?: string
-      organization?: string
-      identitySchema?: string
+      refresh?: boolean;
+      aal?: string;
+      via?: string;
+      returnTo?: string;
+      loginChallenge?: string;
+      organization?: string;
+      identitySchema?: string;
+      flow?: LoginFlow;
     } = {
       refresh: Boolean(refresh),
       via: via ? String(via) : "email",
-    }
+    };
 
-    if (aal) createFlowParams.aal = String(aal)
-    if (returnTo) createFlowParams.returnTo = String(returnTo)
-    if (loginChallenge) createFlowParams.loginChallenge = String(loginChallenge)
-    if (organization) createFlowParams.organization = String(organization)
-    if (identitySchema) createFlowParams.identitySchema = String(identitySchema)
+    if (aal) createFlowParams.aal = String(aal);
+    if (returnTo) createFlowParams.returnTo = String(returnTo);
+    if (login_challenge)
+      createFlowParams.loginChallenge = String(login_challenge);
+    if (organization) createFlowParams.organization = String(organization);
+    if (identitySchema)
+      createFlowParams.identitySchema = String(identitySchema);
+    if (flow) createFlowParams.flow = flow;
 
     ory.frontend
       .createBrowserLoginFlow(createFlowParams)
       .then(({ data }) => {
-        console.log("Created new login flow with OAuth2 context:", data.oauth2_login_request)
-        setFlow(data)
+        console.log(
+          "Created new login flow with OAuth2 context:",
+          data.oauth2_login_request
+        );
+        setFlow(data);
       })
-      .catch(handleFlowError(router, "login", setFlow))
+      .catch(handleFlowError(router, "login", setFlow));
   }, [
     flowId,
     router,
@@ -149,17 +173,15 @@ const Login: NextPage = () => {
     aal,
     refresh,
     returnTo,
-    loginChallenge,
+    login_challenge,
     organization,
     identitySchema,
     via,
     flow,
-  ])
+  ]);
 
   const onSubmit = (values: UpdateLoginFlowBody) =>
     router
-      // On submission, add the flow ID to the URL but do not navigate. This prevents the user losing
-      // his data when she/he reloads the page.
       .push(`/login?flow=${flow?.id}`, undefined, { shallow: true })
       .then(() =>
         ory.frontend
@@ -167,96 +189,114 @@ const Login: NextPage = () => {
             flow: String(flow?.id),
             updateLoginFlowBody: values,
           })
-          // We logged in successfully! Let's bring the user home.
-          .then(({ data }) => {
-            // For browser flows, check if there's a continue_with action
-            // that contains an OAuth2 redirect
-            if (data.session && flow?.return_to) {
-              window.location.href = flow.return_to
-              return
-            }
-
-            // Check for continue_with actions (like OAuth2 redirects)
+          .then(async ({ data }) => {
+            // Handle Hydra OAuth2 login accept flow redirects explicitly
             if (data.continue_with) {
               for (const action of data.continue_with) {
-                // Handle redirect_browser_to action
-                if (action.action === 'redirect_browser_to' && 'redirect_browser_to' in action) {
-                  window.location.href = action.redirect_browser_to
-                  return
+                if (
+                  action.action === "redirect_browser_to" &&
+                  "redirect_browser_to" in action
+                ) {
+                  window.location.href = action.redirect_browser_to;
+                  return;
                 }
               }
             }
 
-            // Otherwise use the return_to from the flow
-            if (flow?.return_to) {
-              window.location.href = flow.return_to
-              return
+            // If session exists and return_to is set, redirect there
+            if (data.session && flow?.return_to) {
+              window.location.href = flow.return_to;
+              return;
             }
 
-            // Fallback to home page
-            router.push("/")
+            // Fallback to return_to in flow
+            if (flow?.return_to) {
+              window.location.href = flow.return_to;
+              return;
+            }
+
+            // Default fallback to homepage
+            router.push("/");
           })
-          .then(() => {})
           .catch(handleFlowError(router, "login", setFlow))
           .catch((err: AxiosError) => {
-            // If the previous handler did not catch the error it's most likely a form validation error
             if (err.response?.status === 400) {
-              // Yup, it is!
-              setFlow(err.response?.data as LoginFlow)
-              return
+              setFlow(err.response?.data as LoginFlow);
+              return;
             }
-
-            return Promise.reject(err)
+            return Promise.reject(err);
           })
-      )
+      );
 
-  // Get registration URL with OAuth2 context
+  // Get registration URL with OAuth2 context preserved
   const getRegistrationUrl = () => {
-    const params = new URLSearchParams()
-    
-    if (returnTo) params.append("return_to", String(returnTo))
-    else if (flow?.return_to) params.append("return_to", flow.return_to)
-    
-    if (flow?.identity_schema) params.append("identity_schema", flow.identity_schema)
-    if (flow?.oauth2_login_request?.challenge) {
-      params.append("login_challenge", flow.oauth2_login_request.challenge)
-    }
-    if (organization) params.append("organization", String(organization))
+    const initRegistrationQuery = new URLSearchParams({
+      return_to: (return_to && return_to.toString()) || flow?.return_to || "",
+      ...(flow?.identity_schema && {
+        identity_schema: flow.identity_schema.toString(),
+      }),
+      ...(flow?.oauth2_login_request?.challenge && {
+        login_challenge: flow.oauth2_login_request.challenge,
+      }),
+    });
 
-    return `/registration?${params.toString()}`
-  }
+    const initRegistrationUrl = getUrlForFlow(
+      defaultConfig().kratosBrowserUrl,
+      "registration",
+      initRegistrationQuery
+    );
+    return initRegistrationUrl;
+  };
 
-  // Get recovery URL with context
+  // Get recovery URL with context preserved
   const getRecoveryUrl = () => {
-    const params = new URLSearchParams()
-    
-    if (returnTo) params.append("return_to", String(returnTo))
-    else if (flow?.return_to) params.append("return_to", flow.return_to)
+    let initRecoveryUrl = "";
+    if (!flow?.refresh) {
+      initRecoveryUrl = getUrlForFlow(
+        defaultConfig().kratosBrowserUrl,
+        "recovery",
+        new URLSearchParams({
+          return_to:
+            (return_to && return_to.toString()) || flow?.return_to || "",
+        })
+      );
+    }
+    return initRecoveryUrl;
+  };
 
-    return `/recovery?${params.toString()}`
-  }
-
-  // Display OAuth2 client information if available
+  // Show OAuth2 client info if available
   const renderOAuth2ClientInfo = () => {
-    const oauth2Request: OAuth2LoginRequest | undefined = flow?.oauth2_login_request
-
-    if (!oauth2Request) return null
-
+    const oauth2Request: OAuth2LoginRequest | undefined =
+      flow?.oauth2_login_request;
+    if (!oauth2Request) return null;
     return (
-      <div className="oauth2-client-info" style={{ marginBottom: "1rem", padding: "1rem", backgroundColor: "#f5f5f5", borderRadius: "4px" }}>
+      <div
+        className="oauth2-client-info"
+        style={{
+          marginBottom: "1rem",
+          padding: "1rem",
+          backgroundColor: "#f5f5f5",
+          borderRadius: "4px",
+        }}
+      >
         <p style={{ margin: 0, fontSize: "0.9rem", color: "#666" }}>
-          <strong>{oauth2Request.client?.client_name || oauth2Request.client?.client_id || "An application"}</strong> is requesting access to your account
+          <strong>
+            {oauth2Request.client?.client_name ||
+              oauth2Request.client?.client_id ||
+              "An application"}
+          </strong>{" "}
+          is requesting access to your account
         </p>
         {oauth2Request.client?.logo_uri && (
-          <img 
-            src={oauth2Request.client.logo_uri} 
-            alt="Client logo" 
+          <img
+            src={oauth2Request.client.logo_uri}
+            alt="Client logo"
             style={{ maxWidth: "100px", marginTop: "0.5rem" }}
           />
         )}
       </div>
-    )
-  }
+    );
+  };
 
   return (
     <>
@@ -268,34 +308,34 @@ const Login: NextPage = () => {
         <CardTitle>
           {(() => {
             if (flow?.refresh) {
-              return "Confirm Action"
+              return "Confirm Action";
             } else if (flow?.requested_aal === "aal2") {
-              return "Two-Factor Authentication"
+              return "Two-Factor Authentication";
             }
-            return "Sign In"
+            return "Sign In";
           })()}
         </CardTitle>
-        
+
         {renderOAuth2ClientInfo()}
-        
+
         <Flow onSubmit={onSubmit} flow={flow} />
       </MarginCard>
-      
+
       {aal || refresh ? (
         <ActionCard>
           {logoutUrl ? (
-            <CenterLink 
-              data-testid="logout-link" 
+            <CenterLink
+              data-testid="logout-link"
               href={logoutUrl}
               onClick={(e) => {
-                e.preventDefault()
-                window.location.href = logoutUrl
+                e.preventDefault();
+                window.location.href = logoutUrl;
               }}
             >
               Log out
             </CenterLink>
           ) : (
-            <CenterLink data-testid="logout-link" onClick={onLogout}>
+            <CenterLink data-testid="logout-link" onClick={LogoutLink(Array.from(initFlowQuery))}>
               Log out
             </CenterLink>
           )}
@@ -317,7 +357,7 @@ const Login: NextPage = () => {
         </>
       )}
     </>
-  )
-}
+  );
+};
 
-export default Login
+export default Login;
