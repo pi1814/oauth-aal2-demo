@@ -10,7 +10,7 @@ export function handleGetFlowError<S>(
   resetFlow: Dispatch<SetStateAction<S | undefined>>,
 ) {
   return async (err: AxiosError) => {
-    switch ((err.response?.data as any).error?.id) {
+    switch ((err.response?.data as any)?.error?.id) {
       case "session_inactive":
         await router.push("/login?return_to=" + window.location.href)
         return
