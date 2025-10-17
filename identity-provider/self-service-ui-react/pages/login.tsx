@@ -42,50 +42,48 @@ const Login: NextPage = () => {
     organization = "",
     identity_schema: identitySchema,
     return_to = "",
-    identity_schema,
   } = router.query;
 
-  ory.frontend
-    .toSession()
-    .then((resp) => {
-      setSession(JSON.stringify(resp.data, null, 2));
-      setHasSession(true);
-    })
-    .catch((err: AxiosError) => {
-      switch (err.response?.status) {
-        case 403:
-        // This is a legacy error code thrown. See code 422 for
-        // more details.
-        case 422:
-          // This status code is returned when we are trying to
-          // validate a session which has not yet completed
-          // its second factor
-          return router.push(
-            `/login?aal=aal2&via=email&return_to=${window.location.href}`
-          );
-        case 401:
-          // do nothing, the user is not logged in
-          return;
-      }
-
-      // Something else happened!
-      return Promise.reject(err);
-    });
+  useEffect(() => {
+    if (!router.isReady) return;
+    ory.frontend
+      .toSession()
+      .then((resp) => {
+        setSession(JSON.stringify(resp.data, null, 2));
+        setHasSession(true);
+      })
+      .catch((err: AxiosError) => {
+        switch (err.response?.status) {
+          case 403:
+          case 422:
+            // Redirect for 2FA or incomplete session
+            return router.push(
+              `/login?aal=aal2&via=email&return_to=${window.location.href}`
+            );
+          case 401:
+            // do nothing - user not logged in
+            break;
+          default:
+            return Promise.reject(err);
+        }
+      });
+  }, [router.isReady, session]);
 
   const initFlowQuery = new URLSearchParams({
-    aal: aal.toString(),
-    refresh: hasSession ? "true" : refresh.toString(),
-    return_to: return_to.toString(),
+    refresh: hasSession ? "true" : refresh ? refresh.toString() : "false",
+    aal: (aal && aal.toString()) || "aal1", // default to aal1 if empty
+    return_to: (returnTo && returnTo.toString()) || "",
     organization: organization.toString(),
     via: via.toString(),
   });
 
   if (isQuerySet(login_challenge)) {
-    initFlowQuery.append("login_challenge", login_challenge);
+    initFlowQuery.append("login_challenge", login_challenge.toString());
   }
-  if (isQuerySet(identity_schema)) {
-    initFlowQuery.append("identity_schema", identity_schema);
+  if (isQuerySet(identitySchema)) {
+    initFlowQuery.append("identity_schema", identitySchema.toString());
   }
+
   const onLogout = LogoutLink(Array.from(initFlowQuery));
 
   useEffect(() => {
@@ -188,6 +186,12 @@ const Login: NextPage = () => {
     ory.frontend
       .createBrowserLoginFlow(createFlowParams)
       .then(({ data }) => {
+        if (!data) {
+          initFlowQuery.set("refresh", "true");
+          initFlowQuery.set("aal", "aal2");
+          router.replace(`/login?${initFlowQuery.toString()}`);
+          return;
+        }
         if (data?.oauth2_login_request) {
           console.log(
             "Created new login flow with OAuth2 context:",
