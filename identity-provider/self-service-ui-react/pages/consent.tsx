@@ -50,13 +50,13 @@ const Consent: NextPage<Props> = ({ redirectTo, consentRequest: initial, error: 
           }
 
           const json = await res.json()
+          console.log('Consent Request:', json.consentRequest.data.requested_scope)
+          setConsentRequest(json.consentRequest)
+          setGrantScope(json.consentRequest.data.requested_scope ?? [])
           if (json.redirect_to) {
             window.location.href = json.redirect_to
             return
           }
-
-          setConsentRequest(json.consentRequest)
-          setGrantScope(json.consentRequest.requested_scope ?? [])
         } catch (err) {
           setError((err as Error).message)
         } finally {
@@ -67,6 +67,8 @@ const Consent: NextPage<Props> = ({ redirectTo, consentRequest: initial, error: 
   }, [router.isReady, consent_challenge, redirectTo])
 
   const handleScopeChange = (scope: string, checked: boolean) => {
+    console.log(grantScope)
+    console.log('Scope change:', scope, checked)
     setGrantScope(prev => (checked ? [...prev, scope] : prev.filter(s => s !== scope)))
   }
 
@@ -178,6 +180,7 @@ const Consent: NextPage<Props> = ({ redirectTo, consentRequest: initial, error: 
                 </svg>
                 Requested Permissions
               </h2>
+              {console.log('Requested Permissions:', consentRequest.requested_scope)}
               {consentRequest.requested_scope?.length === 0 && (
                 <p className="text-sm text-gray-600">No specific permissions requested.</p>
               ) }
