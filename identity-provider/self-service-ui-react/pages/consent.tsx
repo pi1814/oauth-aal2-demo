@@ -178,8 +178,11 @@ const Consent: NextPage<Props> = ({ redirectTo, consentRequest: initial, error: 
                 </svg>
                 Requested Permissions
               </h2>
+              {consentRequest.requested_scope?.length === 0 && (
+                <p className="text-sm text-gray-600">No specific permissions requested.</p>
+              ) }
               <div className="space-y-2">
-                {consentRequest.requested_scope?.map(scope => (
+                {grantScope?.map(scope => (
                   <label 
                     key={scope} 
                     className="flex items-center space-x-3 p-3 rounded-lg hover:bg-gray-50 transition-colors cursor-pointer group"
