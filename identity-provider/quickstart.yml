@@ -39,9 +39,8 @@ services:
   #     - intranet
   #   restart: on-failure
 
-
-  kratos-selfservice-ui-react:
-    build: ./self-service-ui-react
+  kratos-selfservice-ui-nextjs:
+    build: ./self-service-ui-nextjs
     ports:
       - "4455:4455"
     environment:
@@ -56,6 +55,24 @@ services:
     networks:
       - intranet
     restart: on-failure
+
+
+  # kratos-selfservice-ui-react:
+  #   build: ./self-service-ui-react
+  #   ports:
+  #     - "4455:4455"
+  #   environment:
+  #     - PORT=4455
+  #     - HYDRA_ADMIN_URL=http://hydra:4445
+  #     - KRATOS_PUBLIC_URL=http://kratos:4433
+  #     - KRATOS_BROWSER_URL=http://0.0.0.0:4433
+  #     - COOKIE_SECRET=changeme
+  #     - CSRF_COOKIE_NAME=cookie_name
+  #     - CSRF_COOKIE_SECRET=changeme
+  #     - DANGEROUSLY_DISABLE_SECURE_CSRF_COOKIES=true
+  #   networks:
+  #     - intranet
+  #   restart: on-failure
 
   
   kratos:

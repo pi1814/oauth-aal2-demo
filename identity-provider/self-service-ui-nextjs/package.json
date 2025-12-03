@@ -1,0 +1,55 @@
+{
+  "name": "@ory/integration-nextjs",
+  "version": "0.0.1",
+  "config": {
+    "prettierTarget": "**/*.{tsx,ts,json,md,js,css}"
+  },
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "format": "prettier --write ${npm_package_config_prettierTarget}",
+    "format:check": "prettier --check ${npm_package_config_prettierTarget}",
+    "build:lib": "rm -rf dist && rollup -c",
+    "prepublishOnly": "npm run build:lib",
+    "test": "cypress run",
+    "test:dev": "cypress open"
+  },
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "typings": "dist/index.d.ts",
+  "dependencies": {
+    "@ory/client": "^0.0.0-next.f88d10559361",
+    "@ory/integrations": "0.2.8",
+    "@ory/themes": "~0.0.101",
+    "classnames": "^2.3.1",
+    "next": "12.1.6",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "react-toastify": "^8.0.3",
+    "styled-components": "^5.3.1",
+    "typescript": "^4.4.2"
+  },
+  "peerDependencies": {
+    "next": "12.1.6",
+    "react": "17.0.2",
+    "react-dom": "17.0.2",
+    "styled-components": "^5.3.1"
+  },
+  "devDependencies": {
+    "@trivago/prettier-plugin-sort-imports": "^3.1.0",
+    "@types/react": "~17.0.19",
+    "@types/request": "^2.48.7",
+    "@types/styled-components": "^5.1.13",
+    "cypress": "^8.7.0",
+    "eslint": "7.32.0",
+    "eslint-config-next": "12.0.3",
+    "ory-prettier-styles": "^1.1.2",
+    "prettier": "^2.3.2",
+    "rollup": "^2.56.3",
+    "rollup-plugin-dts": "^4.0.0",
+    "rollup-plugin-esbuild": "^4.5.0",
+    "webpack-node-externals": "^3.0.0"
+  }
+}

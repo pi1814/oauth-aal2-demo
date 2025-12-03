@@ -1,0 +1,21 @@
+name: Release NPM Package
+on:
+  release:
+    types: [published]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - uses: actions/setup-node@v5
+        with:
+          node-version: "22"
+      - run: npm ci
+      - run:
+          npm version --no-git-tag-version ${{ github.event.release.tag_name }}
+      - run: npm run build
+      - run:
+          echo "//registry.npmjs.org/:_authToken=${{ secrets.NPM_TOKEN_AENEASR
+          }}" > ~/.npmrc
+      - run: npm publish --access public
