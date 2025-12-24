@@ -102,8 +102,8 @@ export default function Verification() {
           className="mt-10 mb-4"
           width="64"
           height="64"
-          src="/mt-logo-orange.png"
-          alt="Markus Thielker Intranet"
+          src="/favicon.ico"
+          alt="Logo"
         />
         <CardHeader className="flex flex-col items-center text-center space-y-4">
           <CardTitle>Verify your account</CardTitle>

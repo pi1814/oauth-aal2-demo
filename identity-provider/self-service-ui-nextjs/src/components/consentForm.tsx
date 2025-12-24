@@ -44,8 +44,8 @@ export default function ConsentForm(
             <Image className="mt-10 mb-4"
                    width="64"
                    height="64"
-                   src="/mt-logo-orange.png"
-                   alt="Markus Thielker Intranet"/>
+                   src="/favicon.ico"
+                   alt="Logo"/>
             <CardHeader className="flex items-center text-center space-y-4">
                 <CardTitle>Welcome {session?.identity?.traits.name}</CardTitle>
                 <CardDescription className="max-w-xs">

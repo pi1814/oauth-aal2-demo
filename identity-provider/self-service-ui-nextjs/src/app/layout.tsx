@@ -47,7 +47,7 @@ export default function RootLayout({
           rel="manifest"
           href="/manifest.json"
         />
-        <link rel="icon" href="/favicon.png" />
+        <link rel="icon" href="/favicon.ico" />
       </head>
       <body className={cn(inter.className)}>
         <main>
