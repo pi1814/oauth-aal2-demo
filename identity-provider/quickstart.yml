@@ -3,7 +3,6 @@
 ###########################################################################
 
 services:
-
   ### KRATOS ###
   kratos-migrate:
     image: oryd/kratos:v1.1.0
@@ -21,7 +20,7 @@ services:
     restart: on-failure
     networks:
       - intranet
-  
+
   # kratos-selfservice-ui-node:
   #   build: ./self-service-ui-node
   #   ports:
@@ -39,26 +38,8 @@ services:
   #     - intranet
   #   restart: on-failure
 
-  kratos-selfservice-ui-nextjs:
-    build: ./self-service-ui-nextjs
-    ports:
-      - "4455:4455"
-    environment:
-      - PORT=4455
-      - HYDRA_ADMIN_URL=http://hydra:4445
-      - KRATOS_PUBLIC_URL=http://kratos:4433
-      - KRATOS_BROWSER_URL=http://0.0.0.0:4433
-      - COOKIE_SECRET=changeme
-      - CSRF_COOKIE_NAME=cookie_name
-      - CSRF_COOKIE_SECRET=changeme
-      - DANGEROUSLY_DISABLE_SECURE_CSRF_COOKIES=true
-    networks:
-      - intranet
-    restart: on-failure
-
-
-  # kratos-selfservice-ui-react:
-  #   build: ./self-service-ui-react
+  # kratos-selfservice-ui-nextjs:
+  #   build: ./self-service-ui-nextjs
   #   ports:
   #     - "4455:4455"
   #   environment:
@@ -74,14 +55,38 @@ services:
   #     - intranet
   #   restart: on-failure
 
-  
+  kratos-selfservice-ui-react:
+    build: ./self-service-ui-react
+    ports:
+      - "4455:4455"
+    environment:
+      - HYDRA_ADMIN_URL=http://hydra:4445
+      - KRATOS_ADMIN_URL=http://kratos:4434
+      - KRATOS_PUBLIC_URL=http://kratos:4433
+      - NEXT_PUBLIC_HYDRA_ADMIN_URL=http://hydra:4445
+      - NEXT_PUBLIC_KRATOS_PUBLIC_URL=http://kratos:4433
+      - NEXT_PUBLIC_KRATOS_ADMIN_URL=http://kratos:4434
+      - NEXT_PUBLIC_KRATOS_BROWSER_URL=http://0.0.0.0:4433
+      - NODE_ENV=development
+      - PORT=4455
+      - COOKIE_SECRET=changeme
+      - CSRF_COOKIE_NAME=cookie_name
+      - CSRF_COOKIE_SECRET=changeme
+      - DANGEROUSLY_DISABLE_SECURE_CSRF_COOKIES=true
+    networks:
+      - intranet
+    depends_on:
+      - hydra
+      - kratos
+    restart: on-failure
+
   kratos:
     depends_on:
       - kratos-migrate
     image: oryd/kratos:v1.1.0
     ports:
-      - '4433:4433' # public
-      - '4434:4434' # admin
+      - "4433:4433" # public
+      - "4434:4434" # admin
     restart: unless-stopped
     environment:
       - DSN=sqlite:///var/lib/sqlite/db.sqlite?_fk=true
@@ -100,13 +105,13 @@ services:
   mailslurper:
     image: oryd/mailslurper:latest-smtps
     ports:
-      - '4436:4436'
-      - '4437:4437'
+      - "4436:4436"
+      - "4437:4437"
     networks:
       - intranet
 
   ### HYDRA ###
-  
+
   hydra:
     image: oryd/hydra:v2.2.0
     ports:
