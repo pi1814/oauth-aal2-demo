@@ -186,20 +186,20 @@ const Login: NextPage = () => {
     ory.frontend
       .createBrowserLoginFlow(createFlowParams)
       .then(({ data }) => {
-        if (!data) {
-          initFlowQuery.set("refresh", "true");
-          initFlowQuery.set("aal", "aal2");
-          router.replace(`/login?${initFlowQuery.toString()}`);
-          return;
-        }
-        if (data?.oauth2_login_request) {
-          console.log(
-            "Created new login flow with OAuth2 context:",
-            data.oauth2_login_request
-          );
-        } else {
-          console.log("Created new login flow without OAuth2 context");
-        }
+        // if (!data) {
+        //   initFlowQuery.set("refresh", "true");
+        //   initFlowQuery.set("aal", "aal2");
+        //   router.replace(`/login?${initFlowQuery.toString()}`);
+        //   return;
+        // }
+        // if (data?.oauth2_login_request) {
+        //   console.log(
+        //     "Created new login flow with OAuth2 context:",
+        //     data.oauth2_login_request
+        //   );
+        // } else {
+        //   console.log("Created new login flow without OAuth2 context");
+        // }
         setFlow(data);
       })
       .catch(handleFlowError(router, "login", setFlow));
