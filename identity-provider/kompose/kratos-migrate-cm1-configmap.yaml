@@ -1,0 +1,83 @@
+apiVersion: v1
+data:
+  hydra.yml: |
+    serve:
+      cookies:
+        same_site_mode: Lax
+
+    urls:
+      self:
+        issuer: http://0.0.0.0:4444
+      consent: http://0.0.0.0:4455/consent
+      login: http://0.0.0.0:4455/login
+      logout: http://0.0.0.0:4455/logout
+      identity_provider:
+        publicUrl: http://0.0.0.0:4433
+        url: http://0.0.0.0:4434
+
+
+    secrets:
+      system:
+        - youReallyNeedToChangeThis
+
+    oidc:
+      subject_identifiers:
+        supported_types:
+          - pairwise
+          - public
+        pairwise:
+          salt: youReallyNeedToChangeThis
+
+    log:
+      leak_sensitive_values: true
+      level: debug
+  identity.schema.json: |-
+    {
+      "$id": "https://schemas.ory.sh/presets/kratos/quickstart/email-password/identity.schema.json",
+      "$schema": "http://json-schema.org/draft-07/schema#",
+      "title": "Person",
+      "type": "object",
+      "properties": {
+        "traits": {
+          "type": "object",
+          "properties": {
+            "email": {
+              "type": "string",
+              "format": "email",
+              "title": "E-Mail",
+              "minLength": 3,
+              "ory.sh/kratos": {
+                "credentials": {
+                  "password": {
+                    "identifier": true
+                  },
+                  "code": {
+                    "identifier": true,
+                    "via": "email"
+                  },
+                  "totp": {
+                    "account_name": true
+                  }
+                },
+                "recovery": {
+                  "via": "email"
+                },
+                "verification": {
+                  "via": "email"
+                }
+              }
+            }
+          },
+          "required": [
+            "email"
+          ],
+          "additionalProperties": false
+        }
+      }
+    }
+  kratos.yml: "dsn: memory\n\nidentity:\n  default_schema_id: default\n  schemas: \n    - id: default\n      url: file:///etc/config/kratos/identity.schema.json\n\nserve:\n  public:\n    base_url: http://0.0.0.0:4433\n    cors:\n      enabled: true\n      allowed_origins:\n        - http://0.0.0.0:3000\n        - http://0.0.0.0:4455\n      allow_credentials: true\n      allowed_headers:\n        - Content-Type\n        - Cookie\n        - X-CSRF-Token\n      exposed_headers:\n        - Content-Type\n  admin:\n    base_url: http://0.0.0.0:4434\n\nsession:\n  whoami:\n    required_aal: highest_available\n\nselfservice:\n  default_browser_return_url: http://0.0.0.0:4455/\n  allowed_return_urls:\n    - http://0.0.0.0:4455\n    - http://0.0.0.0:3000\n\n  methods:\n    lookup_secret:\n      enabled: true\n    code:\n      enabled: true\n      mfa_enabled: true\n      passwordless_enabled: false\n    totp:\n      config:\n        issuer: Demo App\n      enabled: true\n    password:\n      enabled: true\n      config:\n        min_password_length: 6\n        identifier_similarity_check_enabled: false\n        haveibeenpwned_enabled: false\n\n  flows:\n    recovery:\n      after:\n        hooks: []\n      before:\n        hooks: []\n      enabled: true\n      lifespan: 30m0s\n      notify_unknown_recipients: false\n      ui_url: http://0.0.0.0:4455/recovery\n      use: code\n    \n    verification:\n      after:\n        hooks: []\n      before:\n        hooks: []\n      enabled: true\n      lifespan: 30m0s\n      notify_unknown_recipients: false\n      ui_url: http://0.0.0.0:4455/verification\n      use: code\n\n    error:\n      ui_url: http://0.0.0.0:4455/error\n\n    settings:\n      ui_url: http://0.0.0.0:4455/settings\n      privileged_session_max_age: 1m\n      required_aal: highest_available\n\n    logout:\n      after:\n        default_browser_return_url: http://0.0.0.0:4455/login\n\n    login:\n      ui_url: http://0.0.0.0:4455/login\n\n    registration:\n      ui_url: http://0.0.0.0:4455/registration\n      after:\n        password:\n          hooks:\n            - hook: session\n\ncourier:\n  smtp:\n    connection_uri: smtps://test:test@mailslurper:1025/?skip_ssl_verify=true\n\noauth2_provider:\n  url: http://hydra:4445\n"
+kind: ConfigMap
+metadata:
+  labels:
+    io.kompose.service: kratos-migrate
+  name: kratos-migrate-cm1

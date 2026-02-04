@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f ../quickstart.yml
+    kompose.version: 1.38.0 (HEAD)
+  labels:
+    io.kompose.service: hydra-migrate
+  name: hydra-migrate
+spec:
+  containers:
+    - args:
+        - migrate
+        - -c
+        - /etc/config/hydra/hydra.yml
+        - sql
+        - -e
+        - --yes
+      env:
+        - name: DSN
+          value: sqlite:///var/lib/sqlite/db.sqlite?_fk=true
+      image: oryd/hydra:v2.2.0
+      name: hydra-migrate
+      volumeMounts:
+        - mountPath: /var/lib/sqlite
+          name: hydra-sqlite
+        - mountPath: /etc/config/hydra
+          name: hydra-migrate-cm1
+  restartPolicy: OnFailure
+  volumes:
+    - name: hydra-sqlite
+      persistentVolumeClaim:
+        claimName: hydra-sqlite
+    - configMap:
+        name: hydra-migrate-cm1
+      name: hydra-migrate-cm1

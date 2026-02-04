@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  annotations:
+    kompose.cmd: kompose convert -f ../quickstart.yml
+    kompose.version: 1.38.0 (HEAD)
+  labels:
+    io.kompose.service: hydra
+  name: hydra
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      io.kompose.service: hydra
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      annotations:
+        kompose.cmd: kompose convert -f ../quickstart.yml
+        kompose.version: 1.38.0 (HEAD)
+      labels:
+        io.kompose.service: hydra
+    spec:
+      containers:
+        - args:
+            - serve
+            - -c
+            - /etc/config/hydra/hydra.yml
+            - all
+            - --dev
+          env:
+            - name: DSN
+              value: sqlite:///var/lib/sqlite/db.sqlite?_fk=true
+          image: oryd/hydra:v2.2.0
+          name: hydra
+          ports:
+            - containerPort: 4444
+              protocol: TCP
+            - containerPort: 4445
+              protocol: TCP
+          volumeMounts:
+            - mountPath: /var/lib/sqlite
+              name: hydra-sqlite
+            - mountPath: /etc/config/hydra
+              name: hydra-cm1
+      restartPolicy: Always
+      volumes:
+        - name: hydra-sqlite
+          persistentVolumeClaim:
+            claimName: hydra-sqlite
+        - configMap:
+            name: hydra-cm1
+          name: hydra-cm1
